@@ -6,7 +6,8 @@ To start working with models do
 > ./init.sh
 
 How to use:
-> train.py -- <where save checkpoints> --val_size <size of validation, float> --batch_size <batch size> --num_layers <num_layers in bilstm> --hidden_size <hidden_dim in bilstm>  --epochs <number of epochs> --lr <lr for optimizer>
+> train.py --checkpoint_path <where save checkpoints> --val_size <size of validation, float> --batch_size <batch size> --num_layers <num_layers in bilstm> --hidden_size <hidden_dim in bilstm>  --epochs <number of epochs> --lr <lr for optimizer>
+
 > predict.py --model_chpt_path <path to checkpoint> --sent <your sentence>
 
 Examples:
