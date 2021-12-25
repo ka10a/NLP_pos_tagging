@@ -3,6 +3,7 @@ Homework for NLP course (Autumn 2021)
 
 To start working with models do
 > chmod 777 init.sh
+
 > ./init.sh
 
 How to use:
@@ -12,6 +13,7 @@ How to use:
 
 Examples:
 > python train.py --checkpoint_path ./checkpoints/test/ --epochs 3
+
 > python predict.py --sent "Я люблю мороженое. А Петя любит борщ."
     
 To achive good accuracy train models on 25-35 epochs and use this hyperparameters: --num_layers 4 --hidden_size 500 --lr 0.0001
