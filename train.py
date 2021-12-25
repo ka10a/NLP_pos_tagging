@@ -39,7 +39,7 @@ class Trainer:
             self.model.train(False)
         iters = np.ceil(len(X)/self.batch_size) 
         for X_batch, y_batch in tqdm(
-            batch_generator(X, y, batch_size, shuffle=True), 
+            batch_generator(X, y, self.batch_size, shuffle=True), 
             total=iters):
             
             X_batch, y_batch = collate_fn_lm(X_batch, y_batch)
@@ -173,17 +173,21 @@ def train(args):
     embedding_length = ft.get_dimension()
     target_size = len(idx2tag)
     save_path = args['checkpoint_path']
+    
+    directory = os.path.dirname(save_path)
+    try:
+        os.stat(directory)
+    except:
+        os.mkdir(directory)
 
     my_model = BiLSTM_pos_tagger_v2(embedding_length, hidden_size, num_layers, target_size)
     trainer1 = Trainer(my_model, train_X, train_y, test_X, test_y, batch_size=batch_size, save_path=save_path, lr=1e-4)
-    trainer1.fit(max_epochs=30)
+    trainer1.fit(max_epochs=args['epochs'])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train the POS tagging model')
     parser.add_argument('--checkpoint_path', action='store',
-                        default='./checkpoints/',
-                        help='Checkpoint path',
-                        help='Train set size')
+                        default='./checkpoints/')
     parser.add_argument('--val_size', action='store',
                         default=0.3, type=float,
                         help='Val set size')

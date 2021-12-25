@@ -1,7 +1,10 @@
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import argparse
 import nltk
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
+import fasttext
 
 
 class BiLSTM_pos_tagger_v2(nn.Module):
@@ -24,28 +27,48 @@ class BiLSTM_pos_tagger_v2(nn.Module):
         tag_scores = F.log_softmax(tag_space, dim=1)
         return tag_scores
 
+def collate_fn_lm(samples_X):
+    batch_size = len(samples_X)
+    max_len = max(len(sample) for sample in samples_X)
+    emb_len = len(samples_X[0][0])
+
+    src_tensor_X = torch.zeros((batch_size, max_len, emb_len), dtype=torch.float)
+
+    for batch_id, s in enumerate(samples_X):
+        for i, elem in enumerate(s):
+            src_tensor_X[batch_id][i][:] = torch.tensor(elem)
+
+    return src_tensor_X
+    
 def predict(args):
-    sentence = args['sent']
-    model.load_state_dict(torch.load(args['model_chpt_path']))
-    model.eval()
-    ft = fasttext.load_model('./data/ru_vectors_v3.bin')
-    
-    nltk.download('punkt')
-    sent_words = word_tokenize('sentence')
-    embs = [ft.get_word_vector(w) for w in sent_words]
-    
-    X_batch = torch.FloatTensor(X_batch)
-    logits = model(X_batch.cpu())
-    pred = torch.argmax(logits, dim=-1)
-    
     f_tags = open('./data/tags.txt', 'r')
     id2tag = dict()
     for line in f_tags.readlines():
         i, tag = line.strip().split()
-        id2tag[i] = tag
+        id2tag[int(i)] = tag
+    
+    ft = fasttext.load_model('./data/ru_vectors_v3.bin')
+    model = BiLSTM_pos_tagger_v2(num_layers=4, hidden_dim=300, embedding_dim=ft.get_dimension(), target_size=len(id2tag.keys()))
+    model.load_state_dict(torch.load(args['model_chpt_path']))
+    model.eval()
+    
+    
+    sentence = args['sent']
+    nltk.download('punkt')
+    sent_words = [word_tokenize(t) for t in sent_tokenize(sentence)]
+    embs = [[ft.get_word_vector(w) for w in s] for s in sent_words]
+    
+    X_batch = torch.FloatTensor(collate_fn_lm(embs))
+    logits = model(X_batch.cpu())
+    pred = torch.argmax(logits, dim=-1).numpy()
+    
     ans = []
-    for i, tag_id in enumerate(pred):
-        ans.append((sent_words[i], id2tag[tag_id]))
+    for j, s in enumerate(pred):
+        tmp = []
+        for i, tag_id in enumerate(s):
+            if i < len(sent_words[j]):
+                tmp.append((sent_words[j][i], id2tag[tag_id]))
+        ans.append(tmp)
     return ans
 
 
@@ -60,5 +83,6 @@ if __name__ == '__main__':
 
     args = vars(parser.parse_args())
     ans = predict(args)
-    for elem in ans:
-        print(elem[0], elem[1])
+    for s in ans:
+        for elem in s:
+            print(elem[0], elem[1])

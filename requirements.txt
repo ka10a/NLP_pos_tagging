@@ -1,2 +1,3 @@
 nltk
 fasttext
+torch
