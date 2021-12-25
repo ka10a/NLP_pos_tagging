@@ -17,5 +17,7 @@ Examples:
 > python predict.py --sent "Я люблю мороженое. А Петя любит борщ."
     
 To achive good accuracy train models on 25-35 epochs and use this hyperparameters: --num_layers 4 --hidden_size 500 --lr 0.0001
+
+Models are tuned BiLSTM on fasttext embeddings.
     
 To see how models learn visit https://wandb.ai/imroggen/bilstm_pos_tagger
